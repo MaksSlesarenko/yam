@@ -28,13 +28,13 @@ class Version<version> extends AbstractMigration
     public function up(Schema $schema)
     {
         // this up() migration is auto-generated, please modify it to your needs
-        <up>
+<up>
     }
 
     public function down(Schema $schema)
     {
         // this down() migration is auto-generated, please modify it to your needs
-        <down>
+<down>
     }
 }
 ';
@@ -135,6 +135,9 @@ EOT
         $dir = $configuration->getMigrationsDirectory();
         $dir = $dir ? $dir : getcwd();
         $dir = rtrim($dir, '/');
+        if (!realpath($dir)) {
+            mkdir($dir, 0777, true);
+        }
         $path = $dir . '/Version' . $version . '.php';
 
         if (!file_exists($dir)) {

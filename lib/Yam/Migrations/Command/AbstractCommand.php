@@ -68,6 +68,9 @@ abstract class AbstractCommand extends Command
         $dir = $configuration->getSchemaDirectory();
         $dir = $dir ? $dir : getcwd();
         $dir = rtrim($dir, '/');
+        if (!realpath($dir)) {
+            mkdir($dir, 0777, true);
+        }
         return $dir . '/' . $file;
     }
 }

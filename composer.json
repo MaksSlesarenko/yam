@@ -18,5 +18,5 @@
             "Yam\\Migrations": "lib"
         }
     },
-    "bin": ["bin/yam"]
+    "bin": ["bin/yam", "bin/yam.php"]
 }

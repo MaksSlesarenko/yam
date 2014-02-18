@@ -17,8 +17,9 @@ class DataDumpCommand extends GenerateCommand
         $this
             ->setName('yam:data-dump')
             ->setDescription('Generate a data dump by from database to file.')
-            ->addArgument('table', InputArgument::REQUIRED, 'Dump data from table')
+            ->addArgument('tables', InputArgument::IS_ARRAY, 'Dump data from table')
             ->addOption('file', 'f', InputOption::VALUE_REQUIRED, 'Dump data to file')
+            ->addOption('all', 'a', InputOption::VALUE_NONE, 'Generate for all tables')
             ->setHelp(<<<EOT
 The <info>%command.name%</info> command generates schema based on database current information
 EOT
@@ -31,15 +32,36 @@ EOT
 
         $conn = $configuration->getConnection();
 
-        $tableName = $input->getArgument('table');
-        $path = $input->getOption('file') ?: $tableName . '.yml';
+        if ($input->getOption('all')) {
+            $schemaManager = $configuration->getConnection()->getSchemaManager();
+            $tables = $schemaManager->listTableNames();
+        } else {
+            $tables = $input->getArgument('tables');
+        }
 
-        $result = $conn->fetchAll('SELECT * FROM ' . $conn->quoteIdentifier($tableName));
+        if (!$tables) {
+            throw new \InvalidArgumentException('No tables specified');
+        }
 
-        $path = $this->getSchemaPath($configuration, $path);
+        foreach ($tables as $tableName) {
+            $path = $input->getOption('file') ?: $tableName . '.yml';
 
-        file_put_contents($path, Yaml::dump(array($tableName => $result)));
+            $result = $conn->fetchAll('SELECT * FROM ' . $conn->quoteIdentifier($tableName));
 
-        $output->writeln(sprintf('Saved "<info>%s</info>" rows to "<info>%s</info>".', count($result), $path));
+            if (!$result) {
+                $output->writeln(sprintf('Table "<info>%s</info>" is empty.', $tableName));
+                continue;
+            }
+            $path = $this->getSchemaPath($configuration, $path);
+
+            file_put_contents($path, Yaml::dump(array($tableName => $result), 3, 2));
+
+            $output->writeln(sprintf(
+                'Saved "<info>%s</info>" rows from "<info>%s</info>" to "<info>%s</info>".',
+                count($result),
+                $tableName,
+                $path
+            ));
+        }
     }
 }

@@ -32,7 +32,7 @@ EOT
 
         $path = $this->getSchemaPath($configuration, $input->getOption('schema'));
 
-        file_put_contents($path, Yaml::dump($schemaArray, 100, 2));
+        file_put_contents($path, Yaml::dump($schemaArray, 3, 2));
 
         $output->writeln(sprintf('Current database status is saved to "<info>%s</info>".', $path));
     }
