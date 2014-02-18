@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+SOURCE="${BASH_SOURCE[0]}"
+PRG="$( dirname "$SOURCE" )"
+
+php -f "$PRG"/yam.php $*
