@@ -6,6 +6,8 @@ require_once 'vendor/autoload.php';
 $helperSet = new \Symfony\Component\Console\Helper\HelperSet();
 $helperSet->set(new \Symfony\Component\Console\Helper\DialogHelper(), 'dialog');
 
+\Yam\Migrations\Command\AbstractCommand::$usePrefix = false;
+
 $cli = new \Symfony\Component\Console\Application('Yam Migrations', \Yam\Migrations\MigrationsVersion::VERSION);
 $cli->setCatchExceptions(true);
 $cli->setHelperSet($helperSet);

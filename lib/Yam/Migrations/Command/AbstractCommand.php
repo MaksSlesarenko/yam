@@ -12,6 +12,10 @@ use Symfony\Component\Console\Input\InputOption;
 
 abstract class AbstractCommand extends Command
 {
+    protected $commandPrefix = 'yam:';
+
+    public static $usePrefix = true;
+
     /**
      * @var Configuration
      */
@@ -23,6 +27,11 @@ abstract class AbstractCommand extends Command
         $sDescription = 'The path to a schema configuration file.';
         $this->addOption('configuration', 'c', InputOption::VALUE_OPTIONAL, $cDescription, 'migrations.yml');
         $this->addOption('schema', null, InputOption::VALUE_OPTIONAL, $sDescription, 'schema.yml');
+    }
+
+    protected function getCommandPrefix()
+    {
+        return self::$usePrefix ? $this->commandPrefix : '';
     }
 
     protected function outputHeader(Configuration $configuration, OutputInterface $output)

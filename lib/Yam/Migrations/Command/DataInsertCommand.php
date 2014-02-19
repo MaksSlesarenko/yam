@@ -14,7 +14,7 @@ class DataInsertCommand extends GenerateCommand
         parent::configure();
 
         $this
-            ->setName('yam:data-insert')
+            ->setName($this->getCommandPrefix() . 'data-insert')
             ->setDescription('Insert data from file to database.')
             ->addOption('file', 'f', InputOption::VALUE_REQUIRED, 'Insert data to database')
             ->setHelp(<<<EOT
@@ -26,6 +26,8 @@ EOT
     public function execute(InputInterface $input, OutputInterface $output)
     {
         $configuration = $this->getMigrationConfiguration($input, $output);
+
+        $schemaManager = $configuration->getConnection()->getSchemaManager();
 
         $files = array();
         if ($input->getOption('file')) {
@@ -56,6 +58,8 @@ EOT
                     foreach ($data as $row) {
                         try {
                             $affected += $conn->insert($tableName, $row);
+//                            $schemaManager->listSequences()
+//                            $conn->exec("SELECT setval('report_fx_gain_lose_id_seq', (SELECT MAX(id) FROM report_fx_gain_lose))");
                         } catch (\Exception $e) {
                             $output->writeln(sprintf('<error>%s</error>', $e->getMessage()));
                         }

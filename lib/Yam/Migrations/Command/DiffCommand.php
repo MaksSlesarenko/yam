@@ -44,7 +44,7 @@ class Version<version> extends AbstractMigration
         parent::configure();
 
         $this
-            ->setName('yam:diff')
+            ->setName($this->getCommandPrefix() . 'diff')
             ->setDescription('Generate a migration by comparing your current database to your mapping information.')
             ->setHelp(<<<EOT
 The <info>%command.name%</info> command generates a migration by comparing your current database to your mapping information:
@@ -86,6 +86,9 @@ EOT
         $up = $fromSchema->getMigrateToSql($toSchema, $platform);
         $down = $fromSchema->getMigrateFromSql($toSchema, $platform);
 
+        $up = $this->buildCodeFromSql($configuration, $up);
+        $down = $this->buildCodeFromSql($configuration, $down);
+
         if ( ! $up && ! $down) {
             $output->writeln('<error>No changes detected in your mapping information.</error>');
 
@@ -100,52 +103,24 @@ EOT
 
     private function buildCodeFromSql(Configuration $configuration, array $sql)
     {
-        $currentPlatform = $configuration->getConnection()->getDatabasePlatform()->getName();
-        $code = array(
-            "\$this->abortIf(\$this->connection->getDatabasePlatform()->getName() != \"$currentPlatform\", \"Migration can only be executed safely on '$currentPlatform'.\");", "",
-        );
+        $code = array();
         foreach ($sql as $query) {
             if (strpos($query, $configuration->getMigrationsTableName()) !== false) {
                 continue;
             }
+            $query = str_replace('"', '\"', $query);
+
             $code[] = "\$this->addSql(\"$query\");";
+        }
+        if ($code) {
+            $currentPlatform = $configuration->getConnection()->getDatabasePlatform()->getName();
+            array_unshift(
+                $code,
+                "\$this->abortIf(\$this->connection->getDatabasePlatform()->getName() != \"$currentPlatform\", \"Migration can only be executed safely on '$currentPlatform'.\");",
+                ""
+            );
         }
 
         return implode("\n", $code);
-    }
-
-    protected function generateMigration(Configuration $configuration, InputInterface $input, $version, $up = null, $down = null)
-    {
-        $placeHolders = array(
-            '<namespace>',
-            '<version>',
-            '<up>',
-            '<down>'
-        );
-        $up = $this->buildCodeFromSql($configuration, $up);
-        $down = $this->buildCodeFromSql($configuration, $down);
-
-        $replacements = array(
-            $configuration->getMigrationsNamespace(),
-            $version,
-            $up ? "        " . implode("\n        ", explode("\n", $up)) : null,
-            $down ? "        " . implode("\n        ", explode("\n", $down)) : null
-        );
-        $code = str_replace($placeHolders, $replacements, self::$_template);
-        $dir = $configuration->getMigrationsDirectory();
-        $dir = $dir ? $dir : getcwd();
-        $dir = rtrim($dir, '/');
-        if (!realpath($dir)) {
-            mkdir($dir, 0777, true);
-        }
-        $path = $dir . '/Version' . $version . '.php';
-
-        if (!file_exists($dir)) {
-            throw new \InvalidArgumentException(sprintf('Migrations directory "%s" does not exist.', $dir));
-        }
-
-        file_put_contents($path, $code);
-
-        return $path;
     }
 }

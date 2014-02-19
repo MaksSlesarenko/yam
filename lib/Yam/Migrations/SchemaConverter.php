@@ -57,16 +57,25 @@ class SchemaConverter
     public static function toArray(AbstractSchemaManager $schemaManager)
     {
         $tables = array();
-        foreach ($schemaManager->listTables() as $table) {
+
+        $tableList = $schemaManager->listTables();
+        usort($tableList, function($a, $b) {
+            return strnatcmp($a->getName(), $b->getName());
+        });
+        foreach ($tableList as $table) {
             $tables[$table->getName()] = array(
                 'columns' => array(),
                 'foreignKeys' => array(),
                 'indexes' => array(),
             );
-            if (!count($schemaManager->listTableColumns($table->getName()))) {
+            if (!count($table->getColumns())) {
                 throw new \Exception($table->getName());
             }
-            foreach ($schemaManager->listTableColumns($table->getName()) as $column) {
+            foreach ($table->getColumns() as $column) {
+                if ($column->getName() == 'is_final') {
+                    //var_dump($column);exit;
+                }
+
                 $columnConfig = $column->toArray();
                 $columnName = $columnConfig['name'];
                 unset($columnConfig['name']);
@@ -75,7 +84,7 @@ class SchemaConverter
 
                 $tables[$table->getName()]['columns'][$columnName] = $columnConfig;
             }
-            foreach ($schemaManager->listTableForeignKeys($table->getName()) as $fKey) {
+            foreach ($table->getForeignKeys() as $fKey) {
                 $tables[$table->getName()]['foreignKeys'][$fKey->getName()] = array(
                     'foreignColumns' => $fKey->getForeignColumns(),
                     'foreignTable'   => $fKey->getForeignTableName(),
@@ -83,7 +92,7 @@ class SchemaConverter
                     'options'        => $fKey->getOptions()
                 );
             }
-            foreach ($schemaManager->listTableIndexes($table->getName()) as $index) {
+            foreach ($table->getIndexes() as $index) {
                 $tables[$table->getName()]['indexes'][$index->getName()] = array(
                     'columns' => $index->getColumns(),
                     'unique'  => $index->isUnique(),

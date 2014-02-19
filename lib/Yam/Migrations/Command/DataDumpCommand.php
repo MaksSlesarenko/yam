@@ -15,7 +15,7 @@ class DataDumpCommand extends GenerateCommand
         parent::configure();
 
         $this
-            ->setName('yam:data-dump')
+            ->setName($this->getCommandPrefix() . 'data-dump')
             ->setDescription('Generate a data dump by from database to file.')
             ->addArgument('tables', InputArgument::IS_ARRAY, 'Dump data from table')
             ->addOption('file', 'f', InputOption::VALUE_REQUIRED, 'Dump data to file')

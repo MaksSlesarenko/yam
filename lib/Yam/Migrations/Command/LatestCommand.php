@@ -10,7 +10,7 @@ class LatestCommand extends AbstractCommand
     protected function configure()
     {
         $this
-            ->setName('yam:latest')
+            ->setName($this->getCommandPrefix() . 'latest')
             ->setDescription('Outputs the latest version number')
         ;
 

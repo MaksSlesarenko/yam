@@ -11,7 +11,7 @@ class StatusCommand extends AbstractCommand
     protected function configure()
     {
         $this
-            ->setName('yam:status')
+            ->setName($this->getCommandPrefix() . 'status')
             ->setDescription('View the status of a set of migrations.')
             ->addOption('show-versions', null, InputOption::VALUE_NONE, 'This will display a list of all available migrations and their status')
             ->setHelp(<<<EOT

@@ -40,7 +40,7 @@ class Version<version> extends AbstractMigration
     protected function configure()
     {
         $this
-                ->setName('yam:generate')
+                ->setName($this->getCommandPrefix() . 'generate')
                 ->setDescription('Generate a blank migration class.')
                 ->addOption('editor-cmd', null, InputOption::VALUE_OPTIONAL, 'Open file with this command upon creation.')
                 ->setHelp(<<<EOT
@@ -75,6 +75,8 @@ EOT
             '<up>',
             '<down>'
         );
+        $up = str_replace('\"', '\"', $up);
+        $down = str_replace('"', '\"', $down);
         $replacements = array(
             $configuration->getMigrationsNamespace(),
             $version,

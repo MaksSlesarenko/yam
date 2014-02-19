@@ -13,7 +13,7 @@ class VersionCommand extends AbstractCommand
     protected function configure()
     {
         $this
-            ->setName('yam:version')
+            ->setName($this->getCommandPrefix() . 'version')
             ->setDescription('Manually add and delete migration versions from the version table.')
             ->addArgument('version', InputArgument::REQUIRED, 'The version to add or delete.', null)
             ->addOption('add', null, InputOption::VALUE_NONE, 'Add the specified version.')

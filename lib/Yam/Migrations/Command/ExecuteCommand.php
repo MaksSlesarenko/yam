@@ -12,7 +12,7 @@ class ExecuteCommand extends AbstractCommand
     protected function configure()
     {
         $this
-            ->setName('yam:execute')
+            ->setName($this->getCommandPrefix() . 'execute')
             ->setDescription('Execute a single migration version up or down manually.')
             ->addArgument('version', InputArgument::REQUIRED, 'The version to execute.', null)
             ->addOption('write-sql', null, InputOption::VALUE_NONE, 'The path to output the migration SQL file instead of executing it.')

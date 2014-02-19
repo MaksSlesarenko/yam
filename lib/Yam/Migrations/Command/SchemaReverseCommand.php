@@ -14,7 +14,7 @@ class SchemaReverseCommand extends GenerateCommand
         parent::configure();
 
         $this
-            ->setName('yam:schema-reverse')
+            ->setName($this->getCommandPrefix() . 'schema-reverse')
             ->setDescription('Generate a schema file from your current database.')
             ->setHelp(<<<EOT
 The <info>%command.name%</info> command generates schema based on database current information
@@ -32,7 +32,7 @@ EOT
 
         $path = $this->getSchemaPath($configuration, $input->getOption('schema'));
 
-        file_put_contents($path, Yaml::dump($schemaArray, 3, 2));
+        file_put_contents($path, Yaml::dump($schemaArray, 100, 2));
 
         $output->writeln(sprintf('Current database status is saved to "<info>%s</info>".', $path));
     }
