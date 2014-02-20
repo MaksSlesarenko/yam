@@ -12,33 +12,6 @@ use Symfony\Component\Yaml\Yaml;
 
 class DiffCommand extends GenerateCommand
 {
-    private static $_template =
-        '<?php
-
-namespace <namespace>;
-
-use Yam\Migrations\AbstractMigration;
-use Doctrine\DBAL\Schema\Schema;
-
-/**
-* Auto-generated Migration: Please modify to your needs!
-*/
-class Version<version> extends AbstractMigration
-{
-    public function up(Schema $schema)
-    {
-        // this up() migration is auto-generated, please modify it to your needs
-<up>
-    }
-
-    public function down(Schema $schema)
-    {
-        // this down() migration is auto-generated, please modify it to your needs
-<down>
-    }
-}
-';
-
     protected function configure()
     {
         parent::configure();
@@ -86,10 +59,10 @@ EOT
         $up = $fromSchema->getMigrateToSql($toSchema, $platform);
         $down = $fromSchema->getMigrateFromSql($toSchema, $platform);
 
-        $up = $this->buildCodeFromSql($configuration, $up);
-        $down = $this->buildCodeFromSql($configuration, $down);
+        $up = $this->removeMigrationTableDiff($configuration, $up);
+        $down = $this->removeMigrationTableDiff($configuration, $down);
 
-        if ( ! $up && ! $down) {
+        if (!$up && !$down) {
             $output->writeln('<error>No changes detected in your mapping information.</error>');
 
             return;
@@ -101,26 +74,13 @@ EOT
         $output->writeln(sprintf('Generated new migration class to "<info>%s</info>" from schema differences.', $path));
     }
 
-    private function buildCodeFromSql(Configuration $configuration, array $sql)
+    protected function removeMigrationTableDiff($configuration, array $sql)
     {
-        $code = array();
-        foreach ($sql as $query) {
+        foreach ($sql as $i => $query) {
             if (strpos($query, $configuration->getMigrationsTableName()) !== false) {
-                continue;
+                unset($sql[$i]);
             }
-            $query = str_replace('"', '\"', $query);
-
-            $code[] = "\$this->addSql(\"$query\");";
         }
-        if ($code) {
-            $currentPlatform = $configuration->getConnection()->getDatabasePlatform()->getName();
-            array_unshift(
-                $code,
-                "\$this->abortIf(\$this->connection->getDatabasePlatform()->getName() != \"$currentPlatform\", \"Migration can only be executed safely on '$currentPlatform'.\");",
-                ""
-            );
-        }
-
-        return implode("\n", $code);
+        return $sql;
     }
 }

@@ -13,7 +13,12 @@ class YamlConfiguration extends AbstractFileConfiguration
     {
         $array = Yaml::parse($file);
 
-        $this->setConnection(\Doctrine\DBAL\DriverManager::getConnection($array['connection']));
+        $conn = \Doctrine\DBAL\DriverManager::getConnection($array['connection']);
+
+        if (!empty($array['sqlLogger'])) {
+            $conn->getConfiguration()->setSQLLogger(new $array['sqlLogger']);
+        }
+        $this->setConnection($conn);
 
         if (isset($array['name'])) {
             $this->setName($array['name']);

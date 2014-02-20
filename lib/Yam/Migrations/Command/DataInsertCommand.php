@@ -2,10 +2,12 @@
 
 namespace Yam\Migrations\Command;
 
+use Doctrine\DBAL\Platforms\PostgreSqlPlatform;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Yaml\Yaml;
+use Yam\Migrations\Configuration\Configuration;
 
 class DataInsertCommand extends GenerateCommand
 {
@@ -27,6 +29,7 @@ EOT
     {
         $configuration = $this->getMigrationConfiguration($input, $output);
 
+        $platform = $configuration->getConnection()->getDatabasePlatform();
         $schemaManager = $configuration->getConnection()->getSchemaManager();
 
         $files = array();
@@ -45,6 +48,13 @@ EOT
                 }
             }
         }
+        if (!$files) {
+            $output->writeln(sprintf(
+                '<error>No files found to import.</error>'
+            ));
+            return;
+        }
+        $tables = array();
         foreach ($files as $file) {
             try {
                 $fileData = Yaml::parse($file);
@@ -54,12 +64,12 @@ EOT
                 $affected = 0;
                 $total = 0;
                 foreach ($fileData as $tableName => $data) {
+                    $tables[$tableName] = 1;
+
                     $total += count($data);
                     foreach ($data as $row) {
                         try {
                             $affected += $conn->insert($tableName, $row);
-//                            $schemaManager->listSequences()
-//                            $conn->exec("SELECT setval('report_fx_gain_lose_id_seq', (SELECT MAX(id) FROM report_fx_gain_lose))");
                         } catch (\Exception $e) {
                             $output->writeln(sprintf('<error>%s</error>', $e->getMessage()));
                         }
@@ -81,7 +91,47 @@ EOT
                 ));
             }
         }
+
+        if ($platform instanceof PostgreSqlPlatform) {
+            $sequences = array();
+            foreach ($schemaManager->listSequences() as $sequence) {
+                $sequences[] = $sequence->getName();
+            }
+
+            foreach ($tables as $tableName => $nothing) {
+                $pks = $schemaManager->listTableDetails($tableName)->getPrimaryKeyColumns();
+                if (!$pks) {
+                    continue;
+                }
+
+                $pk = current($pks);
+                $sequenceName = $platform->getIdentitySequenceName($tableName, $pk);
+                if (!in_array($sequenceName, $sequences)) {
+                    continue;
+                }
+
+                //$schemaManager->listSequences();
+                $tableName = $conn->quoteIdentifier($tableName);
+                $conn->exec("SELECT setval('" . $sequenceName . "', (SELECT MAX(" . $pk . ") FROM " . $tableName . "))");
+
+                $output->writeln(sprintf(
+                    'Updated sequences for table "<info>%s</info>".',
+                    $tableName
+                ));
+            }
+        }
     }
 
+    public function getDataSql(Configuration $configuration, $tableName)
+    {
+        $conn = $configuration->getConnection();
 
+        $data = array_map(function($value) use ($conn) {
+            return $conn->quote($value);
+        }, $data);
+
+        return 'INSERT INTO ' . $conn->quoteIdentifier($tableName) . ' ('
+             . implode(', ', array_keys($data)) . ')' .
+            ' VALUES (' . implode(', ', array_values($data)) . ')';
+    }
 }

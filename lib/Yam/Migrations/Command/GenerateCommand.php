@@ -10,7 +10,7 @@ use Symfony\Component\Console\Input\InputOption;
 class GenerateCommand extends AbstractCommand
 {
 
-    private static $_template =
+    protected static $_template =
             '<?php
 
 namespace <namespace>;
@@ -26,13 +26,13 @@ class Version<version> extends AbstractMigration
     public function up(Schema $schema)
     {
         // this up() migration is auto-generated, please modify it to your needs
-        <up>
+<up>
     }
 
     public function down(Schema $schema)
     {
         // this down() migration is auto-generated, please modify it to your needs
-        <down>
+<down>
     }
 }
 ';
@@ -67,7 +67,7 @@ EOT
         $output->writeln(sprintf('Generated new migration class to "<info>%s</info>"', $path));
     }
 
-    protected function generateMigration(Configuration $configuration, InputInterface $input, $version, $up = null, $down = null)
+    protected function generateMigration(Configuration $configuration, InputInterface $input, $version, array $up = array(), array $down = array())
     {
         $placeHolders = array(
             '<namespace>',
@@ -75,8 +75,10 @@ EOT
             '<up>',
             '<down>'
         );
-        $up = str_replace('\"', '\"', $up);
-        $down = str_replace('"', '\"', $down);
+
+        $up = $this->buildCodeFromSql($configuration, $up);
+        $down = $this->buildCodeFromSql($configuration, $down);
+
         $replacements = array(
             $configuration->getMigrationsNamespace(),
             $version,
@@ -103,5 +105,25 @@ EOT
         }
 
         return $path;
+    }
+
+    private function buildCodeFromSql(Configuration $configuration, array $sql)
+    {
+        $currentPlatform = $configuration->getConnection()->getDatabasePlatform()->getName();
+
+        $code = array(
+            "\$this->abortIf(\$this->connection->getDatabasePlatform()->getName() != \"$currentPlatform\", \"Migration can only be executed safely on '$currentPlatform'.\");",
+            ""
+        );
+        foreach ($sql as $query) {
+            if (strpos($query, $configuration->getMigrationsTableName()) !== false) {
+                continue;
+            }
+            $query = str_replace('"', '\"', $query);
+
+            $code[] = "\$this->addSql(\"$query\");";
+        }
+
+        return implode("\n", $code);
     }
 }
