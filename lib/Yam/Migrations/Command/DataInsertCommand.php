@@ -3,9 +3,9 @@
 namespace Yam\Migrations\Command;
 
 use Doctrine\DBAL\Platforms\PostgreSqlPlatform;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Yaml\Yaml;
 use Yam\Migrations\Configuration\Configuration;
 
@@ -18,7 +18,7 @@ class DataInsertCommand extends GenerateCommand
         $this
             ->setName($this->getCommandPrefix() . 'data-insert')
             ->setDescription('Insert data from file to database.')
-            ->addOption('file', 'f', InputOption::VALUE_REQUIRED, 'Insert data to database')
+            ->addArgument('file', InputArgument::IS_ARRAY, 'File data to insert into database')
             ->setHelp(<<<EOT
 The <info>%command.name%</info> command generates schema based on database current information
 EOT
@@ -32,30 +32,28 @@ EOT
         $platform = $configuration->getConnection()->getDatabasePlatform();
         $schemaManager = $configuration->getConnection()->getSchemaManager();
 
-        $files = array();
-        if ($input->getOption('file')) {
-            $file = $this->getSchemaPath($configuration, $input->getOption('file'));
-            if (!file_exists($file)) {
-                $output->writeln(sprintf('<error>File "%s" not found.</error>', $file));
-                return;
-            }
-            $files[] = $file;
-        } else {
+        $files = $input->getArgument('file');
+        if (!$files) {
             foreach (new \DirectoryIterator($configuration->getSchemaDirectory()) as $file) {
                 /* @var \SplFileObject $file*/
                 if ($file->isFile() && $file->isReadable() && $file->getFilename() !== 'schema.yml') {
                     $files[] = $file->getPathname();
                 }
             }
+            if (!$files) {
+                $output->writeln(sprintf(
+                    '<error>No files found to import.</error>'
+                ));
+                return;
+            }
         }
-        if (!$files) {
-            $output->writeln(sprintf(
-                '<error>No files found to import.</error>'
-            ));
-            return;
-        }
+
         $tables = array();
         foreach ($files as $file) {
+            if (!file_exists($file)) {
+                $output->writeln(sprintf('<error>File "%s" not found.</error>', $file));
+                continue;
+            }
             try {
                 $fileData = Yaml::parse($file);
 
