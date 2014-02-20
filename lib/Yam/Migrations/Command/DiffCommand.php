@@ -36,7 +36,7 @@ EOT
 
         $platform = $conn->getDatabasePlatform();
 
-        $schemaFile = $this->getSchemaPath($configuration, $input->getOption('schema'));
+        $schemaFile = $this->getPath($configuration->getSchemaDirectory(), $input->getOption('schema'));
 
         if (!file_exists($schemaFile)) {
             $output->writeln(sprintf('<error>File "%s" not found.</error>', $schemaFile));

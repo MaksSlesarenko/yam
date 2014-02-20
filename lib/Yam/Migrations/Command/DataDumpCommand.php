@@ -52,7 +52,7 @@ EOT
                 $output->writeln(sprintf('Table "<info>%s</info>" is empty.', $tableName));
                 continue;
             }
-            $path = $this->getSchemaPath($configuration, $path);
+            $path = $this->getPath($configuration->getDataDirectory(), $path);
 
             file_put_contents($path, Yaml::dump(array($tableName => $result), 3, 2));
 

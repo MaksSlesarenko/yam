@@ -5,6 +5,7 @@ namespace Yam\Migrations\Command;
 use Doctrine\DBAL\Platforms\PostgreSqlPlatform;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Yaml;
 use Yam\Migrations\Configuration\Configuration;
@@ -19,6 +20,7 @@ class DataInsertCommand extends GenerateCommand
             ->setName($this->getCommandPrefix() . 'data-insert')
             ->setDescription('Insert data from file to database.')
             ->addArgument('file', InputArgument::IS_ARRAY, 'File data to insert into database')
+            ->addOption('data-map', 'd', InputOption::VALUE_REQUIRED, 'Data map file', 'data.map')
             ->setHelp(<<<EOT
 The <info>%command.name%</info> command generates schema based on database current information
 EOT
@@ -34,17 +36,39 @@ EOT
 
         $files = $input->getArgument('file');
         if (!$files) {
-            foreach (new \DirectoryIterator($configuration->getSchemaDirectory()) as $file) {
-                /* @var \SplFileObject $file*/
-                if ($file->isFile() && $file->isReadable() && $file->getFilename() !== 'schema.yml') {
-                    $files[] = $file->getPathname();
+            if ($mapFile = $input->getOption('data-map')) {
+                if (!file_exists($mapFile)) {
+                    $mapFile  = $this->getPath($configuration->getDataDirectory(), $mapFile);
+                    if (!file_exists($mapFile)) {
+                        $output->writeln(sprintf('<error>File "%s" not found.</error>', $mapFile));
+                        return;
+                    }
                 }
-            }
-            if (!$files) {
-                $output->writeln(sprintf(
-                    '<error>No files found to import.</error>'
-                ));
-                return;
+                foreach (file($mapFile) as $file) {
+                    $file = trim($file);
+                    if (!file_exists($file)) {
+                        $file = $this->getPath($configuration->getDataDirectory(), $file);
+                        if (!file_exists($file)) {
+                            $output->writeln(sprintf('<error>File "%s" not found.</error>', $file));
+                            continue;
+                        } else {
+                            $files[] = $file;
+                        }
+                    }
+                }
+            } else {
+                foreach (new \DirectoryIterator($configuration->getDataDirectory()) as $file) {
+                    /* @var \SplFileObject $file*/
+                    if ($file->isFile() && $file->isReadable() && $file->getFilename() !== 'schema.yml') {
+                        $files[] = $file->getPathname();
+                    }
+                }
+                if (!$files) {
+                    $output->writeln(sprintf(
+                        '<error>No files found to import.</error>'
+                    ));
+                    return;
+                }
             }
         }
 

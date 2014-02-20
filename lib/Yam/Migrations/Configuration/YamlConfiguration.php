@@ -38,6 +38,10 @@ class YamlConfiguration extends AbstractFileConfiguration
             $schemaDirectory = $this->getDirectoryRelativeToFile($file, $array['schema_directory']);
             $this->setSchemaDirectory($schemaDirectory);
         }
+        if (isset($array['data_directory'])) {
+            $schemaDirectory = $this->getDirectoryRelativeToFile($file, $array['data_directory']);
+            $this->setDataDirectory($schemaDirectory);
+        }
         if (isset($array['migrations']) && is_array($array['migrations'])) {
             foreach ($array['migrations'] as $migration) {
                 $this->registerMigration($migration['version'], $migration['class']);

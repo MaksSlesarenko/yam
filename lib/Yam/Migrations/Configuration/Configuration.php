@@ -63,6 +63,14 @@ class Configuration
     private $schemaDirectory;
 
     /**
+     *
+     * The path to a directory where new data files will be written
+     *
+     * @var string
+     */
+    private $dataDirectory;
+
+    /**
      * Namespace the migration classes live in
      *
      * @var string
@@ -229,6 +237,26 @@ class Configuration
     public function getSchemaDirectory()
     {
         return $this->schemaDirectory;
+    }
+
+    /**
+     * Set the new data directory where new data configuration files are generated
+     *
+     * @param string $dataDirectory The new data directory
+     */
+    public function setDataDirectory($dataDirectory)
+    {
+        $this->dataDirectory = $dataDirectory;
+    }
+
+    /**
+     * Returns the new data directory where new data configuration files classes are generated
+     *
+     * @return string $dataDirectory The new data directory
+     */
+    public function getDataDirectory()
+    {
+        return $this->dataDirectory;
     }
 
     /**

@@ -72,9 +72,8 @@ abstract class AbstractCommand extends Command
         return $this->configuration;
     }
 
-    public function getSchemaPath(Configuration $configuration, $file)
+    public function getPath($dir, $file)
     {
-        $dir = $configuration->getSchemaDirectory();
         $dir = $dir ? $dir : getcwd();
         $dir = rtrim($dir, '/');
         if (!realpath($dir)) {

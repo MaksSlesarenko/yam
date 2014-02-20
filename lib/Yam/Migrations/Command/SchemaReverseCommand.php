@@ -30,7 +30,7 @@ EOT
 
         $schemaArray = SchemaConverter::toArray($schemaManager);
 
-        $path = $this->getSchemaPath($configuration, $input->getOption('schema'));
+        $path = $this->getPath($configuration->getSchemaDirectory(), $input->getOption('schema'));
 
         file_put_contents($path, Yaml::dump($schemaArray, 100, 2));
 
