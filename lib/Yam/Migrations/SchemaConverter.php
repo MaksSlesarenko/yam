@@ -108,6 +108,8 @@ class SchemaConverter
                 'initial_size'    => $sequence->getInitialValue()
             );
         }
+        ksort($tables[$table->getName()]['foreignKeys']);
+        ksort($tables[$table->getName()]['indexes']);
         return array('tables' => $tables, 'sequences' => $sequences);
     }
 }
