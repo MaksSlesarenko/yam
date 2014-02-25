@@ -1,6 +1,6 @@
 <?php
 
-namespace Yam\Migrations;
+namespace Yam\Migrations\Exception;
 
 class AbortMigrationException extends MigrationException
 {

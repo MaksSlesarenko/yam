@@ -2,7 +2,7 @@
 
 namespace Yam\Migrations\Command;
 
-use Yam\Migrations\MigrationException;
+use Yam\Migrations\Exception\MigrationException;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;

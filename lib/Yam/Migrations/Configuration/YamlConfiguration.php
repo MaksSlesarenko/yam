@@ -3,6 +3,7 @@
 namespace Yam\Migrations\Configuration;
 
 use Symfony\Component\Yaml\Yaml;
+use Yam\Migrations\Exception\MigrationException;
 
 class YamlConfiguration extends AbstractFileConfiguration
 {
@@ -29,23 +30,14 @@ class YamlConfiguration extends AbstractFileConfiguration
         if (isset($array['migrations_namespace'])) {
             $this->setMigrationsNamespace($array['migrations_namespace']);
         }
-        if (isset($array['migrations_directory'])) {
-            $migrationsDirectory = $this->getDirectoryRelativeToFile($file, $array['migrations_directory']);
-            $this->setMigrationsDirectory($migrationsDirectory);
-            $this->registerMigrationsFromDirectory($migrationsDirectory);
-        }
-        if (isset($array['schema_directory'])) {
-            $schemaDirectory = $this->getDirectoryRelativeToFile($file, $array['schema_directory']);
-            $this->setSchemaDirectory($schemaDirectory);
-        }
-        if (isset($array['data_directory'])) {
-            $schemaDirectory = $this->getDirectoryRelativeToFile($file, $array['data_directory']);
-            $this->setDataDirectory($schemaDirectory);
-        }
-        if (isset($array['migrations']) && is_array($array['migrations'])) {
-            foreach ($array['migrations'] as $migration) {
-                $this->registerMigration($migration['version'], $migration['class']);
+        if (isset($array['directory'])) {
+            if (empty($array['directory']) || !is_dir($array['directory'])) {
+                throw MigrationException::migrationsDirectoryRequired();
             }
+
+            $directory = $this->getDirectoryRelativeToFile($file, $array['directory']);
+            $this->setDirectory($directory);
+            $this->registerMigrationsFromDirectory($this->getMigrationsDirectory());
         }
     }
 }

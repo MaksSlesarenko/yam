@@ -4,6 +4,9 @@ namespace Yam\Migrations;
 
 use Yam\Migrations\Configuration\Configuration;
 use Doctrine\DBAL\Schema\Schema;
+use Yam\Migrations\Exception\AbortMigrationException;
+use Yam\Migrations\Exception\IrreversibleMigrationException;
+use Yam\Migrations\Exception\SkipMigrationException;
 
 abstract class AbstractMigration
 {

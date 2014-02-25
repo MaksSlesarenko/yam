@@ -81,4 +81,9 @@ abstract class AbstractCommand extends Command
         }
         return $dir . '/' . $file;
     }
+
+    public function getReleaseVersion(Configuration $configuration)
+    {
+        return $configuration->getPath();
+    }
 }

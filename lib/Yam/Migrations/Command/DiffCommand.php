@@ -19,6 +19,7 @@ class DiffCommand extends GenerateCommand
         $this
             ->setName($this->getCommandPrefix() . 'diff')
             ->setDescription('Generate a migration by comparing your current database to your mapping information.')
+            //->addOption('show-sql', null, InputOption::VALUE_NONE, 'Data map file', 'data.map')
             ->setHelp(<<<EOT
 The <info>%command.name%</info> command generates a migration by comparing your current database to your mapping information:
 

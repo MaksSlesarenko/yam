@@ -3,7 +3,7 @@
 namespace Yam\Migrations\Configuration;
 
 use Doctrine\DBAL\Connection;
-use Yam\Migrations\MigrationException;
+use Yam\Migrations\Exception\MigrationException;
 use Yam\Migrations\OutputWriter;
 use Yam\Migrations\Version;
 use Doctrine\DBAL\Schema\Column;
@@ -52,7 +52,7 @@ class Configuration
      *
      * @var string
      */
-    private $migrationsDirectory;
+    private $directory;
 
     /**
      *
@@ -107,7 +107,7 @@ class Configuration
         if ( ! $this->migrationsNamespace) {
             throw MigrationException::migrationsNamespaceRequired();
         }
-        if ( ! $this->migrationsDirectory) {
+        if ( ! $this->directory) {
             throw MigrationException::migrationsDirectoryRequired();
         }
     }
@@ -200,33 +200,23 @@ class Configuration
     }
 
     /**
-     * Set the new migrations directory where new migration classes are generated
+     * Set the main directory where new migration classes are generated
      *
-     * @param string $migrationsDirectory The new migrations directory
+     * @param string $directory The main directory
      */
-    public function setMigrationsDirectory($migrationsDirectory)
+    public function setDirectory($directory)
     {
-        $this->migrationsDirectory = $migrationsDirectory;
+        $this->directory = $directory;
     }
 
     /**
      * Returns the new migrations directory where new migration classes are generated
      *
-     * @return string $migrationsDirectory The new migrations directory
+     * @return string $directory The new migrations directory
      */
     public function getMigrationsDirectory()
     {
-        return $this->migrationsDirectory;
-    }
-
-    /**
-     * Set the new schema directory where new schema configuration files are generated
-     *
-     * @param string $schemaDirectory The new schema directory
-     */
-    public function setSchemaDirectory($schemaDirectory)
-    {
-        $this->schemaDirectory = $schemaDirectory;
+        return $this->directory . '/version';
     }
 
     /**
@@ -236,17 +226,7 @@ class Configuration
      */
     public function getSchemaDirectory()
     {
-        return $this->schemaDirectory;
-    }
-
-    /**
-     * Set the new data directory where new data configuration files are generated
-     *
-     * @param string $dataDirectory The new data directory
-     */
-    public function setDataDirectory($dataDirectory)
-    {
-        $this->dataDirectory = $dataDirectory;
+        return $this->directory . '/schema';
     }
 
     /**
@@ -256,7 +236,7 @@ class Configuration
      */
     public function getDataDirectory()
     {
-        return $this->dataDirectory;
+        return $this->directory . '/data';
     }
 
     /**
@@ -293,9 +273,14 @@ class Configuration
         $path = realpath($path);
         $path = rtrim($path, '/');
         $files = glob($path . '/Version*.php');
+        //$files = glob($path . '/*/version/Version*.php');
         $versions = array();
+
         if ($files) {
             foreach ($files as $file) {
+
+                //$dir = basename(dirname(dirname($file)));
+
                 require_once($file);
                 $info = pathinfo($file);
                 $version = substr($info['filename'], 7);

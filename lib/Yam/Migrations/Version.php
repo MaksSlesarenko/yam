@@ -3,6 +3,7 @@
 namespace Yam\Migrations;
 
 use Yam\Migrations\Configuration\Configuration;
+use Yam\Migrations\Exception\SkipMigrationException;
 
 
 class Version

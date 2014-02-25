@@ -2,7 +2,7 @@
 
 namespace Yam\Migrations\Configuration;
 
-use Yam\Migrations\MigrationException;
+use Yam\Migrations\Exception\MigrationException;
 
 abstract class AbstractFileConfiguration extends Configuration
 {
