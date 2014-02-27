@@ -72,10 +72,6 @@ class SchemaConverter
                 throw new \Exception($table->getName());
             }
             foreach ($table->getColumns() as $column) {
-                if ($column->getName() == 'is_final') {
-                    //var_dump($column);exit;
-                }
-
                 $columnConfig = $column->toArray();
                 $columnName = $columnConfig['name'];
                 unset($columnConfig['name']);

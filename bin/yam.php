@@ -25,6 +25,7 @@ $cli->addCommands(array(
     new \Yam\Migrations\Command\DataInsertCommand(),
     new \Yam\Migrations\Command\DataDumpCommand(),
     new \Yam\Migrations\Command\SequenceUpdateCommand(),
+    new \Yam\Migrations\Command\CleanCommand(),
 ));
 
 $input = file_exists('migrations-input.php')

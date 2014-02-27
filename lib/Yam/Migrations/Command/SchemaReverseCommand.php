@@ -2,6 +2,8 @@
 
 namespace Yam\Migrations\Command;
 
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputOption;
 use Yam\Migrations\SchemaConverter;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -16,6 +18,8 @@ class SchemaReverseCommand extends GenerateCommand
         $this
             ->setName($this->getCommandPrefix() . 'schema-reverse')
             ->setDescription('Generate a schema file from your current database.')
+//            ->addArgument('table', InputArgument::REQUIRED, 'Table to reverse', null)
+//            ->addOption('file', 'f', InputOption::VALUE_REQUIRED, 'file path ', 'schema.yml')
             ->setHelp(<<<EOT
 The <info>%command.name%</info> command generates schema based on database current information
 EOT
