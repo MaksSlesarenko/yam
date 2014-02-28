@@ -59,6 +59,9 @@ EOT
         foreach ($tables as $tableName) {
             if ($input->getOption('indexes')) {
                 foreach ($schemaManager->listTableIndexes($tableName) as $index) {
+                    if ($index->isPrimary()) {
+                        continue;
+                    }
                     $sql[] = "DROP INDEX " . $index->getQuotedName($platform) . "";
                 }
             }
@@ -75,7 +78,6 @@ EOT
                 $sql[] = "DROP SEQUENCE " . $sequenceName;
             }
         }
-
 
         foreach ($sql as $query) {
             try {
