@@ -56,6 +56,10 @@ EOT
 
         $sql = array();
 
+        if (!$input->getOption('indexes') && !$input->getOption('foreign-keys')) {
+            throw new \InvalidArgumentException('Specify what to clean indexes or foreign keys');
+        }
+
         foreach ($tables as $tableName) {
             if ($input->getOption('indexes')) {
                 foreach ($schemaManager->listTableIndexes($tableName) as $index) {
