@@ -30,6 +30,9 @@ class YamlConfiguration extends AbstractFileConfiguration
         if (isset($array['migrations_namespace'])) {
             $this->setMigrationsNamespace($array['migrations_namespace']);
         }
+        if (isset($array['bootstrap'])) {
+            require $array['bootstrap'];
+        }
         if (isset($array['directory'])) {
             if (empty($array['directory']) || !is_dir($array['directory'])) {
                 throw MigrationException::migrationsDirectoryRequired();

@@ -21,6 +21,8 @@ class DataInsertCommand extends GenerateCommand
             ->setDescription('Insert data from file to database.')
             ->addArgument('file', InputArgument::IS_ARRAY, 'File data to insert into database')
             ->addOption('data-map', 'd', InputOption::VALUE_REQUIRED, 'Data map file', 'data.map')
+            ->addOption('show-sql', null, InputOption::VALUE_NONE, 'Show sql insert')
+            ->addOption('migration', null, InputOption::VALUE_NONE, 'Generate migration')
             ->setHelp(<<<EOT
 The <info>%command.name%</info> command generates schema based on database current information
 EOT
@@ -72,7 +74,16 @@ EOT
             }
         }
 
-        $tables = array();
+        $sql = array();
+        $conn = $configuration->getConnection();
+
+        $sequences = array();
+        if ($platform instanceof PostgreSqlPlatform) {
+            foreach ($schemaManager->listSequences() as $sequence) {
+                $sequences[] = $sequence->getName();
+            }
+        }
+
         foreach ($files as $file) {
             if (!file_exists($file)) {
                 $output->writeln(sprintf('<error>File "%s" not found.</error>', $file));
@@ -81,65 +92,89 @@ EOT
             try {
                 $fileData = Yaml::parse($file);
 
-                $conn = $configuration->getConnection();
-
-                $affected = 0;
-                $total = 0;
                 foreach ($fileData as $tableName => $data) {
-                    $tables[$tableName] = 1;
-
-                    $total += count($data);
+                    if (!isset($sql[$tableName])) {
+                        $sql[$tableName] = array();
+                    }
                     foreach ($data as $row) {
-                        try {
-                            $affected += $conn->insert($tableName, $row);
-                        } catch (\Exception $e) {
-                            $output->writeln(sprintf('<error>%s</error>', $e->getMessage()));
+                        $quoted = array();
+                        foreach ($row as $key => $value) {
+                            if (null === $value) {
+                                $value = 'NULL';
+                            } elseif (0 === $value) {
+                                $value = '0';
+                            } else {
+                                $value = $conn->quote($value);
+                            }
+                            $quoted[$conn->quoteIdentifier($key)] = $value;
                         }
+
+                        $sql[$tableName][] = 'INSERT INTO ' . $conn->quoteIdentifier($tableName)
+                            . ' (' . implode(', ', array_keys($quoted)) . ')'
+                            . ' VALUES (' . implode(', ', array_values($quoted)) . ')';
+                    }
+
+                    if ($sequences) {
+                        $pks = $schemaManager->listTableDetails($tableName)->getPrimaryKeyColumns();
+                        if (!$pks) {
+                            continue;
+                        }
+
+                        $pk = current($pks);
+                        $sequenceName = $platform->getIdentitySequenceName($tableName, $pk);
+                        if (!in_array($sequenceName, $sequences)) {
+                            continue;
+                        }
+
+                        //$schemaManager->listSequences();
+                        $sql[$tableName][] = "SELECT setval('" . $sequenceName . "', (SELECT MAX(" . $pk . ") FROM "
+                            . $conn->quoteIdentifier($tableName) . "))";
                     }
                 }
-
-                $output->writeln(sprintf(
-                    'Inserted "<info>%s</info>" of "<info>%s</info> " rows from "<info>%s</info> file".',
-                    $affected,
-                    $total,
-                    $file
-                ));
             } catch (\Exception $e) {
-
                 $output->writeln(sprintf(
-                    'Error importing file "<info>%s</info>": "<info>%s</info>".',
+                    'Error parsing file "<info>%s</info>": "<info>%s</info>".',
                     $file,
                     $e->getMessage()
                 ));
             }
         }
 
-        if ($platform instanceof PostgreSqlPlatform) {
-            $sequences = array();
-            foreach ($schemaManager->listSequences() as $sequence) {
-                $sequences[] = $sequence->getName();
+
+
+        if ($input->getOption('migration')) {
+            $up = array();
+            foreach ($sql as $tableSql) {
+                $up += $tableSql;
             }
+            $version = date('YmdHis');
+            $path = $this->generateMigration($configuration, $input, $version, $up, array());
 
-            foreach ($tables as $tableName => $nothing) {
-                $pks = $schemaManager->listTableDetails($tableName)->getPrimaryKeyColumns();
-                if (!$pks) {
-                    continue;
+            $output->writeln(sprintf('Generated new migration class to "<info>%s</info>".', $path));
+        } else {
+            foreach ($sql as $tableName => $tableSql) {
+                $affected = 0;
+                $total = count($tableSql);
+
+                foreach ($tableSql as $query) {
+                    try {
+                        if ($input->getOption('show-sql')) {
+                            $output->writeln($query);
+                        } else {
+                            $affected += $conn->executeUpdate($query);
+                        }
+                    } catch (\Exception $e) {
+                        $output->writeln(sprintf('<error>%s</error>', $e->getMessage()));
+                    }
                 }
-
-                $pk = current($pks);
-                $sequenceName = $platform->getIdentitySequenceName($tableName, $pk);
-                if (!in_array($sequenceName, $sequences)) {
-                    continue;
+                if (!$input->getOption('show-sql')) {
+                    $output->writeln(sprintf(
+                        'Inserted "<info>%s</info>" of "<info>%s</info> " rows into "<info>%s</info> table".',
+                        $affected,
+                        $total,
+                        $tableName
+                    ));
                 }
-
-                //$schemaManager->listSequences();
-                $tableName = $conn->quoteIdentifier($tableName);
-                $conn->exec("SELECT setval('" . $sequenceName . "', (SELECT MAX(" . $pk . ") FROM " . $tableName . "))");
-
-                $output->writeln(sprintf(
-                    'Updated sequences for table "<info>%s</info>".',
-                    $tableName
-                ));
             }
         }
     }
