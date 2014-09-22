@@ -22,11 +22,12 @@ class CleanCommand extends GenerateCommand
             ->addArgument('table', InputArgument::IS_ARRAY, 'Table to reverse', null)
             ->addOption('indexes', null, InputOption::VALUE_NONE, 'Clean indexes')
             ->addOption('sequences', null, InputOption::VALUE_NONE, 'Clean sequences')
+            ->addOption('rows', null, InputOption::VALUE_NONE, 'Clean table rows')
             ->addOption('foreign-keys', null, InputOption::VALUE_NONE, 'Clean foreign keys')
             ->addOption('all-tables', null, InputOption::VALUE_NONE, 'Apply to all tables')
             ->addOption('show-sql', null, InputOption::VALUE_NONE, 'Show sql only')
             ->setHelp(<<<EOT
-The <info>%command.name%</info> command generates schema based on database current information
+The <info>%command.name%</info> command cleans up database
 EOT
             );
     }
@@ -56,7 +57,7 @@ EOT
 
         $sql = array();
 
-        if (!$input->getOption('indexes') && !$input->getOption('foreign-keys')) {
+        if (!$input->getOption('indexes') && !$input->getOption('foreign-keys') && !$input->getOption('rows')) {
             throw new \InvalidArgumentException('Specify what to clean indexes or foreign keys');
         }
 
@@ -74,6 +75,10 @@ EOT
                     $fkName = $fKey->getQuotedName($platform);
                     $sql[] = "ALTER TABLE " . $conn->quoteIdentifier($tableName) . " DROP CONSTRAINT " . $fkName;
                 }
+            }
+
+            if ($input->getOption('rows')) {
+                $sql[] = "DELETE FROM " . $conn->quoteIdentifier($tableName);
             }
         }
         if ($input->getOption('sequences')) {
