@@ -26,7 +26,10 @@ The <info>%command.name%</info> command generates a migration by comparing your 
     <info>%command.full_name%</info>
 EOT
             )
-            ->addOption('filter-expression', null, InputOption::VALUE_OPTIONAL, 'Tables which are filtered by Regular Expression.');
+            ->addOption('filter-expression', null, InputOption::VALUE_OPTIONAL, 'Tables which are filtered by Regular Expression.')
+            ->addOption('show-sql-up', null, InputOption::VALUE_NONE, 'Show sql')
+            ->addOption('show-sql-down', null, InputOption::VALUE_NONE, 'Show sql')
+        ;
     }
 
     public function execute(InputInterface $input, OutputInterface $output)
@@ -69,10 +72,22 @@ EOT
             return;
         }
 
-        $version = date('YmdHis');
-        $path = $this->generateMigration($configuration, $input, $version, $up, $down);
+        if ($input->getOption('show-sql-up')) {
+            $output->writeln('');
+            $output->writeln('<info>SQL to upgrade database:</info>');
+            $output->writeln($up);
+        }
+        if ($input->getOption('show-sql-down')) {
+            $output->writeln('');
+            $output->writeln('<info>SQL to downgrade database:</info>');
+            $output->writeln($down);
+        }
+        if (!$input->getOption('show-sql-up') && !$input->getOption('show-sql-down')) {
+            $version = date('YmdHis');
+            $path = $this->generateMigration($configuration, $input, $version, $up, $down);
 
-        $output->writeln(sprintf('Generated new migration class to "<info>%s</info>" from schema differences.', $path));
+            $output->writeln(sprintf('Generated new migration class to "<info>%s</info>" from schema differences.', $path));
+        }
     }
 
     protected function removeMigrationTableDiff($configuration, array $sql)

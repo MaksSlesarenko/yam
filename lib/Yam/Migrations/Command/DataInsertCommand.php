@@ -140,8 +140,6 @@ EOT
             }
         }
 
-
-
         if ($input->getOption('migration')) {
             $up = array();
             foreach ($sql as $tableSql) {
@@ -164,7 +162,9 @@ EOT
                             $affected += $conn->executeUpdate($query);
                         }
                     } catch (\Exception $e) {
-                        $output->writeln(sprintf('<error>%s</error>', $e->getMessage()));
+                        if (OutputInterface::VERBOSITY_VERBOSE <= $output->getVerbosity()) {
+                            $output->writeln(sprintf('<error>%s</error>', $e->getMessage()));
+                        }
                     }
                 }
                 if (!$input->getOption('show-sql')) {
