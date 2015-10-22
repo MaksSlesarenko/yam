@@ -12,7 +12,7 @@ class YamlConfiguration extends AbstractFileConfiguration
      */
     protected function doLoad($file)
     {
-        $array = Yaml::parse($file);
+        $array = Yaml::parse(file_get_contents($file));
 
         $conn = \Doctrine\DBAL\DriverManager::getConnection($array['connection']);
 
