@@ -126,9 +126,10 @@ EOT
                             continue;
                         }
 
+                        $max = $conn->fetchColumn("SELECT MAX(" . $pk . ") FROM " . $conn->quoteIdentifier($tableName));
+
                         //$schemaManager->listSequences();
-                        $sql[$tableName][] = "SELECT setval('" . $sequenceName . "', (SELECT MAX(" . $pk . ") FROM "
-                            . $conn->quoteIdentifier($tableName) . "))";
+                        $sql[$tableName][] = "ALTER SEQUENCE " . $sequenceName . " START WITH " . $max;
                     }
                 }
             } catch (\Exception $e) {
