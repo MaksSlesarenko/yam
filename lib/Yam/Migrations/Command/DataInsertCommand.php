@@ -90,7 +90,7 @@ EOT
                 continue;
             }
             try {
-                $fileData = Yaml::parse($file);
+                $fileData = Yaml::parse(file_get_contents($file));
 
                 foreach ($fileData as $tableName => $data) {
                     if (!isset($sql[$tableName])) {

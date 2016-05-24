@@ -55,7 +55,7 @@ EOT
         }
 
 
-        $schemaArray = Yaml::parse($schemaFile);
+        $schemaArray = Yaml::parse(file_get_contents($schemaFile));
 
         $toSchema = SchemaConverter::toSchema($schemaArray);
         $fromSchema = $conn->getSchemaManager()->createSchema();
