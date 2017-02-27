@@ -4,7 +4,7 @@
 require_once 'vendor/autoload.php';
 
 $helperSet = new \Symfony\Component\Console\Helper\HelperSet();
-$helperSet->set(new \Symfony\Component\Console\Helper\DialogHelper(), 'dialog');
+$helperSet->set(new \Symfony\Component\Console\Helper\QuestionHelper(), 'question');
 
 \Yam\Migrations\Command\AbstractCommand::$usePrefix = false;
 
